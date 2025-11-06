@@ -23,27 +23,6 @@ public class StudentPreferenceController {
         this.repo = repo;
     }
 
-    /**
-     * save or update student preferences/criteria
-     * 
-     * POST /api/preferences
-     * 
-     * an example JSON:
-     * {
-     *   "budget": 50000,
-     *   "schoolYear": "2025",
-     *   "expectedGrad": "2029",
-     *   "schoolType": "BOTH", // PUBLIC, PRIVATE, BOTH
-     *   "state": "California",
-     *   "targetCountry": "USA",
-     *   "major": "Computer Science",
-     *   "enrollmentType": "FULL_TIME", // PART_TIME, FULL_TIME
-     *   "modality": "HYBRID", // ONLINE, IN_PERSON, HYBRID
-     *   "gpa": 3.7,
-     *   "requirementType": "BOTH" // CAPSTONE, GRE, NEITHER, BOTH
-     * }
-     */
-
     @PostMapping
     public ResponseEntity<?> savePreferences(@RequestParam String studentId, @RequestBody StudentPreference preferenceDetails) {
         try {

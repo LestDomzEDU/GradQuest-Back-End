@@ -43,21 +43,6 @@ public class SchoolController {
         return "Top 5 matching schools";
     }
 
-    /**
-     * searching schools with custom criteria (alternative to using saved preferences)
-     * I put this in here incase we want to allow students to do custom searches outside of their saved preferences
-     * we most likely won't need this if we are only using saved preferences to get matches
-     * 
-     * POST /api/schools/search
-     * 
-     * an example JSON search can be the following: 
-     * {
-     *   "budget": 50000,
-     *   "schoolType": "public",
-     *   "state": "California",
-     *   "programType": "masters"
-     * }
-     */
 
     @PostMapping("/search")
     public ResponseEntity<List<School>> searchSchools(@RequestBody Map<String, Object> searchCriteria) {
