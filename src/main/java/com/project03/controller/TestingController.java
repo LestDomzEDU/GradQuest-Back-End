@@ -5,6 +5,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class TestingController {
+    @GetMapping("/")
+    public String root() {
+        return "API is running! Visit /api/schools to see all Schools in API.";
+    }
+    
     // just checking to see if 
     @GetMapping("/testing")
     public String testing() {

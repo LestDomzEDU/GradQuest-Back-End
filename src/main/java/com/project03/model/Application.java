@@ -2,7 +2,6 @@ package com.project03.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * representing a student's application to a school.
@@ -46,12 +45,6 @@ public class Application {
     @Column(name = "decision_date")
     private LocalDate decisionDate; 
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     // SIMPLE CONSTRUCTORS, GETTERS, AND SETTERS
 
     public Application() {
@@ -63,17 +56,6 @@ public class Application {
         this.school = school;
         this.programName = programName;
         this.status = ApplicationStatus.PENDING;
-    }
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -146,22 +128,6 @@ public class Application {
 
     public void setDecisionDate(LocalDate decisionDate) {
         this.decisionDate = decisionDate;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     /**

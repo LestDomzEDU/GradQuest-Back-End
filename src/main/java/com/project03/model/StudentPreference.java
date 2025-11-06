@@ -1,7 +1,6 @@
 package com.project03.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 /**
  * Entity representing student search preferences/criteria from the form submission.
@@ -55,13 +54,8 @@ public class StudentPreference {
     private Double gpa;
 
     @Column(name = "capstone_required")
-    private Boolean capstoneRequired;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Enumerated(EnumType.STRING)
+    private RequirementType requirementType; // CAPSTONE, GRE, NEITHER, BOTH
 
     // Constructors
     public StudentPreference() {
@@ -75,18 +69,6 @@ public class StudentPreference {
         this.expectedGrad = expectedGrad;
         this.schoolType = schoolType;
         this.state = state;
-    }
-
-    // Lifecycle callbacks
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 
     // Getters and Setters
@@ -194,28 +176,12 @@ public class StudentPreference {
         this.gpa = gpa;
     }
 
-    public Boolean getCapstoneRequired() {
-        return capstoneRequired;
+    public RequirementType getRequirementType() {
+        return requirementType;
     }
 
-    public void setCapstoneRequired(Boolean capstoneRequired) {
-        this.capstoneRequired = capstoneRequired;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setRequirementType(RequirementType requirementType) {
+        this.requirementType = requirementType;
     }
 
     /**
@@ -243,5 +209,14 @@ public class StudentPreference {
         IN_PERSON,
         HYBRID
     }
-}
 
+    /**
+     * Enum for requirement type (capstone, GRE, neither, or both)
+     */
+    public enum RequirementType {
+        CAPSTONE,
+        GRE,
+        NEITHER,
+        BOTH
+    }
+}

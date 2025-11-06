@@ -2,7 +2,6 @@ package com.project03.model;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
  * this will be used to represent the schools that are in our database that are going to be given to the students
@@ -60,11 +59,17 @@ public class School {
     @Column(name = "accreditation")
     private String accreditation;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "enrollment_type")
+    @Enumerated(EnumType.STRING)
+    private EnrollmentType enrollmentType; // PART_TIME or FULL_TIME
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column
+    @Enumerated(EnumType.STRING)
+    private Modality modality; // ONLINE, IN_PERSON, HYBRID
+
+    @Column(name = "requirement_type")
+    @Enumerated(EnumType.STRING)
+    private RequirementType requirementType; // CAPSTONE, GRE, NEITHER, BOTH
 
     // Constructors
     public School() {
@@ -75,18 +80,6 @@ public class School {
         this.type = type;
         this.state = state;
         this.programName = programName;
-    }
-
-    // Lifecycle callbacks
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 
     // Getters and Setters
@@ -210,20 +203,28 @@ public class School {
         this.accreditation = accreditation;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public EnrollmentType getEnrollmentType() {
+        return enrollmentType;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setEnrollmentType(EnrollmentType enrollmentType) {
+        this.enrollmentType = enrollmentType;
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+    public Modality getModality() {
+        return modality;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setModality(Modality modality) {
+        this.modality = modality;
+    }
+
+    public RequirementType getRequirementType() {
+        return requirementType;
+    }
+
+    public void setRequirementType(RequirementType requirementType) {
+        this.requirementType = requirementType;
     }
 
     /**
@@ -232,6 +233,33 @@ public class School {
     public enum SchoolType {
         PUBLIC,
         PRIVATE
+    }
+
+    /**
+     * Enum for enrollment type
+     */
+    public enum EnrollmentType {
+        PART_TIME,
+        FULL_TIME
+    }
+
+    /**
+     * Enum for learning modality
+     */
+    public enum Modality {
+        ONLINE,
+        IN_PERSON,
+        HYBRID
+    }
+
+    /**
+     * Enum for requirement type (capstone, GRE, neither, or both)
+     */
+    public enum RequirementType {
+        CAPSTONE,
+        GRE,
+        NEITHER,
+        BOTH
     }
 }
 

@@ -1,6 +1,13 @@
 package com.project03.controller;
 
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+
+import com.project03.model.StudentPreference;
+import com.project03.repository.StudentPreferenceRepository;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This will handle saving and retrieving student preferences/criteria that will need to be filled out
@@ -10,32 +17,49 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/preferences")
 public class StudentPreferenceController {
 
-    /**
-     * save or update student preferences/criteria
-     * 
-     * POST /api/preferences
-     * 
-     * an example JSON:
-     * {
-     *   "budget": 50000,
-     *   "schoolYear": "2025",
-     *   "expectedGrad": "2029",
-     *   "schoolType": "BOTH", // PUBLIC, PRIVATE, BOTH
-     *   "state": "California",
-     *   "targetCountry": "USA",
-     *   "major": "Computer Science",
-     *   "enrollmentType": "FULL_TIME", // PART_TIME, FULL_TIME
-     *   "modality": "HYBRID", // ONLINE, IN_PERSON, HYBRID
-     *   "gpa": 3.7,
-     *   "capstoneRequired": true
-     * }
-     */
+    private final StudentPreferenceRepository repo;
+
+    public StudentPreferenceController(StudentPreferenceRepository repo) {
+        this.repo = repo;
+    }
 
     @PostMapping
-    public String savePreferences(@RequestBody String preferences) {
-        // TODO: Extract student ID from authentication token
-        // TODO: Save preferences to database
-        return "Preferences saved";
+    public ResponseEntity<?> savePreferences(@RequestParam String studentId, @RequestBody StudentPreference preferenceDetails) {
+        try {
+            StudentPreference preference = repo.findByStudentId(studentId)
+                    .map(existing -> {
+                        // Update existing preferences
+                        if (preferenceDetails.getBudget() != null) existing.setBudget(preferenceDetails.getBudget());
+                        if (preferenceDetails.getSchoolYear() != null) existing.setSchoolYear(preferenceDetails.getSchoolYear());
+                        if (preferenceDetails.getExpectedGrad() != null) existing.setExpectedGrad(preferenceDetails.getExpectedGrad());
+                        if (preferenceDetails.getSchoolType() != null) existing.setSchoolType(preferenceDetails.getSchoolType());
+                        if (preferenceDetails.getState() != null) existing.setState(preferenceDetails.getState());
+                        if (preferenceDetails.getProgramType() != null) existing.setProgramType(preferenceDetails.getProgramType());
+                        if (preferenceDetails.getTargetCountry() != null) existing.setTargetCountry(preferenceDetails.getTargetCountry());
+                        if (preferenceDetails.getMajor() != null) existing.setMajor(preferenceDetails.getMajor());
+                        if (preferenceDetails.getEnrollmentType() != null) existing.setEnrollmentType(preferenceDetails.getEnrollmentType());
+                        if (preferenceDetails.getModality() != null) existing.setModality(preferenceDetails.getModality());
+                        if (preferenceDetails.getGpa() != null) existing.setGpa(preferenceDetails.getGpa());
+                        if (preferenceDetails.getRequirementType() != null) existing.setRequirementType(preferenceDetails.getRequirementType());
+                        return existing;
+                    })
+                    .orElseGet(() -> {
+                        // Create new preferences
+                        preferenceDetails.setStudentId(studentId);
+                        return preferenceDetails;
+                    });
+            
+            StudentPreference savedPreference = repo.save(preference);
+            return ResponseEntity.ok(savedPreference);
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to save preferences");
+            errorResponse.put("message", e.getMessage());
+            if (e.getCause() != null) {
+                errorResponse.put("cause", e.getCause().getMessage());
+            }
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
     }
 
     /**
@@ -45,35 +69,54 @@ public class StudentPreferenceController {
      */
 
     @GetMapping
-    public String getPreferences() {
-        // TODO: Extract student ID from authentication token
-        // TODO: Retrieve preferences from database
-        return "User preferences";
+    public ResponseEntity<StudentPreference> getPreferences(@RequestParam String studentId) {
+        return repo.findByStudentId(studentId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
      * update student preferences
      * 
-     * PUT /api/preferences
+     * PUT /api/preferences?studentId=123
      */
 
     @PutMapping
-    public String updatePreferences(@RequestBody String preferences) {
-        // TODO: Extract student ID from authentication token
-        // TODO: Update preferences in database
-        return "Preferences updated";
+    public ResponseEntity<StudentPreference> updatePreferences(@RequestParam String studentId, @RequestBody StudentPreference preferenceDetails) {
+        return repo.findByStudentId(studentId)
+                .map(preference -> {
+                    if (preferenceDetails.getBudget() != null) preference.setBudget(preferenceDetails.getBudget());
+                    if (preferenceDetails.getSchoolYear() != null) preference.setSchoolYear(preferenceDetails.getSchoolYear());
+                    if (preferenceDetails.getExpectedGrad() != null) preference.setExpectedGrad(preferenceDetails.getExpectedGrad());
+                    if (preferenceDetails.getSchoolType() != null) preference.setSchoolType(preferenceDetails.getSchoolType());
+                    if (preferenceDetails.getState() != null) preference.setState(preferenceDetails.getState());
+                    if (preferenceDetails.getProgramType() != null) preference.setProgramType(preferenceDetails.getProgramType());
+                    if (preferenceDetails.getTargetCountry() != null) preference.setTargetCountry(preferenceDetails.getTargetCountry());
+                    if (preferenceDetails.getMajor() != null) preference.setMajor(preferenceDetails.getMajor());
+                    if (preferenceDetails.getEnrollmentType() != null) preference.setEnrollmentType(preferenceDetails.getEnrollmentType());
+                    if (preferenceDetails.getModality() != null) preference.setModality(preferenceDetails.getModality());
+                    if (preferenceDetails.getGpa() != null) preference.setGpa(preferenceDetails.getGpa());
+                    if (preferenceDetails.getRequirementType() != null) preference.setRequirementType(preferenceDetails.getRequirementType());
+                    StudentPreference updatedPreference = repo.save(preference);
+                    return ResponseEntity.ok(updatedPreference);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
-     * delete student preferences
-     * DELETE /api/preferences
+     * delete student preferences (basic user flow)
+     * 
+     * DELETE /api/preferences?studentId=123
      */
     
     @DeleteMapping
-    public String deletePreferences() {
-        // TODO: Extract student ID from authentication token
-        // TODO: Delete preferences from database
-        return "Preferences deleted";
+    public ResponseEntity<Void> deletePreferences(@RequestParam String studentId) {
+        if (repo.existsByStudentId(studentId)) {
+            repo.deleteByStudentId(studentId);
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
 
