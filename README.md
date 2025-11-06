@@ -48,8 +48,8 @@ docker rm project3-backend
 
 The application uses Spring profiles for configuration:
 
-- **Default profile**: `application.properties` - Basic configuration
-- **Production profile**: `application-prod.properties` - MySQL database configuration
+- **Default profile**: `application.properties` - Basic configuration (uses H2 for local dev)
+- **Production profile**: `application-prod.properties` - Supabase PostgreSQL database configuration
 
 The active profile is set to `prod` by default in `application.properties`:
 

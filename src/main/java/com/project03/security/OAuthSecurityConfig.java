@@ -19,6 +19,8 @@ public class OAuthSecurityConfig {
                            "/api/me", "/api/logout",
                            "/oauth2/final", "/debug/**").permitAll()
           .requestMatchers("/oauth2/**", "/login/**", "/logout").permitAll()
+          // Allow API endpoints without authentication for testing (remove in production)
+          .requestMatchers("/api/**").permitAll()
           .anyRequest().authenticated()
       )
       .oauth2Login(oauth -> oauth
