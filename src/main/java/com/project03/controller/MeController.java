@@ -13,16 +13,32 @@ public class MeController {
 
   @GetMapping("/api/me")
   public Map<String, Object> me(@AuthenticationPrincipal OAuth2User user) {
-    if (user == null) {
-      return Map.of("authenticated", false);
-    }
+    if (user == null) return Map.of("authenticated", false);
+
+    Map<String, Object> attrs = user.getAttributes();
     Map<String, Object> out = new LinkedHashMap<>();
     out.put("authenticated", true);
-    out.put("name", user.getAttribute("name"));
-    out.put("login", user.getAttribute("login"));
-    out.put("id", user.getAttribute("id"));
-    out.put("avatar_url", user.getAttribute("avatar_url"));
-    out.put("attributes", user.getAttributes());
+
+    // GitHub fields
+    String ghLogin = (String) attrs.get("login");
+    String ghAvatar = (String) attrs.get("avatar_url");
+    String ghName = (String) attrs.get("name");
+
+    // Google OIDC fields
+    String ggEmail = (String) attrs.get("email");
+    String ggName = (String) attrs.get("name");
+    String ggPicture = (String) attrs.get("picture");
+
+    // normalized
+    String login = ghLogin != null ? ghLogin : ggEmail;
+    String name  = ghName  != null ? ghName  : ggName;
+    String avatar = ghAvatar != null ? ghAvatar : ggPicture;
+
+    out.put("login", login);
+    out.put("name", name);
+    out.put("email", ggEmail);
+    out.put("avatar_url", avatar);
+    out.put("attributes", attrs);
     return out;
   }
 }
