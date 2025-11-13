@@ -2,9 +2,15 @@ package com.project03.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 public class OAuthSecurityConfig {
@@ -13,6 +19,7 @@ public class OAuthSecurityConfig {
   SecurityFilterChain securityFilterChain(HttpSecurity http,
                                           ClientRegistrationRepository registrations) throws Exception {
     http
+      .cors(Customizer.withDefaults())
       .csrf(csrf -> csrf.disable())
       .authorizeHttpRequests(auth -> auth
           .requestMatchers("/", "/index.html", "/error",
@@ -23,11 +30,9 @@ public class OAuthSecurityConfig {
           .requestMatchers("/api/**").permitAll()
           .anyRequest().authenticated()
       )
+      .headers(h -> h.frameOptions(f -> f.sameOrigin()))
       .oauth2Login(oauth -> oauth
-          .authorizationEndpoint(ep -> ep
-              .authorizationRequestResolver(new GoogleAuthRequestResolver(registrations, "/oauth2/authorization"))
-          )
-          // IMPORTANT: after successful OAuth, go to the close-tab page, not /api/me
+          .authorizationEndpoint(ae -> ae.baseUri("/oauth2/authorization"))
           .defaultSuccessUrl("/oauth2/final", true)
           .failureUrl("/?login=failed")
       )
@@ -38,5 +43,19 @@ public class OAuthSecurityConfig {
           .deleteCookies("JSESSIONID")
       );
     return http.build();
+  }
+
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedOrigins(List.of(
+        "https://grad-quest-app-2cac63f2b9b2.herokuapp.com"
+    ));
+    config.setAllowCredentials(true);
+    config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+    config.setAllowedHeaders(List.of("Authorization","Cache-Control","Content-Type","X-Requested-With"));
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+    return source;
   }
 }

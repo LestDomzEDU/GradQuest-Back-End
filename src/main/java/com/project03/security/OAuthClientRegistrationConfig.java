@@ -12,22 +12,20 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 @Configuration
 public class OAuthClientRegistrationConfig {
 
-  // Use localhost. For Android emulator, run: adb reverse tcp:8080 tcp:8080
-  @Value("${OAUTH_REDIRECT_BASE:http://localhost:8080}")
+  // IMPORTANT: default to your Heroku URL in prod; you can override locally.
+  @Value("${OAUTH_REDIRECT_BASE:https://grad-quest-app-2cac63f2b9b2.herokuapp.com}")
   private String redirectBase;
 
-  // GitHub (unchanged)
-  @Value("${GITHUB_CLIENT_ID:Ov23liNJm44d2aLDyANl}")
+  // GitHub OAuth
+  @Value("${GITHUB_CLIENT_ID:}")
   private String githubClientId;
-
-  @Value("${GITHUB_CLIENT_SECRET:55ec6302d52239aa1af39af8e16e57f7fb3dbbcb}")
+  @Value("${GITHUB_CLIENT_SECRET:}")
   private String githubClientSecret;
 
-  // Google (your real IDs provided; swap to env vars before shipping)
-  @Value("${GOOGLE_CLIENT_ID:70728075111-153fojf0ehe0as72nv344ir1jhuqfpk8.apps.googleusercontent.com}")
+  // Google OAuth
+  @Value("${GOOGLE_CLIENT_ID:}")
   private String googleClientId;
-
-  @Value("${GOOGLE_CLIENT_SECRET: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}")
+  @Value("${GOOGLE_CLIENT_SECRET:}")
   private String googleClientSecret;
 
   @Bean
@@ -47,21 +45,21 @@ public class OAuthClientRegistrationConfig {
         .clientName("GitHub")
         .build();
 
-ClientRegistration google = ClientRegistration
-    .withRegistrationId("google")
-    .clientId(googleClientId)
-    .clientSecret(googleClientSecret)
-    .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-    .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-    .redirectUri(redirectBase + "/login/oauth2/code/{registrationId}")
-    .scope("openid", "profile", "email")
-    .authorizationUri("https://accounts.google.com/o/oauth2/v2/auth")
-    .tokenUri("https://oauth2.googleapis.com/token")
-    .jwkSetUri("https://www.googleapis.com/oauth2/v3/certs")   // <-- add this
-    .userInfoUri("https://openidconnect.googleapis.com/v1/userinfo")
-    .userNameAttributeName("sub")
-    .clientName("Google")
-    .build();
+    ClientRegistration google = ClientRegistration
+        .withRegistrationId("google")
+        .clientId(googleClientId)
+        .clientSecret(googleClientSecret)
+        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+        .redirectUri(redirectBase + "/login/oauth2/code/{registrationId}")
+        .scope("openid", "profile", "email")
+        .authorizationUri("https://accounts.google.com/o/oauth2/v2/auth")
+        .tokenUri("https://oauth2.googleapis.com/token")
+        .jwkSetUri("https://www.googleapis.com/oauth2/v3/certs")
+        .userInfoUri("https://openidconnect.googleapis.com/v1/userinfo")
+        .userNameAttributeName("sub")
+        .clientName("Google")
+        .build();
 
     return new InMemoryClientRegistrationRepository(github, google);
   }
