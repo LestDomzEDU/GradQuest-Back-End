@@ -22,8 +22,12 @@ public class OAuthSecurityConfig {
       .cors(Customizer.withDefaults())
       .csrf(csrf -> csrf.disable())
       .authorizeHttpRequests(auth -> auth
-          .requestMatchers("/", "/h2/**", "/oauth2/final", "/oauth/debug").permitAll()
-          .requestMatchers("/oauth2/**", "/login/**").permitAll()
+          .requestMatchers("/", "/index.html", "/error",
+                           "/api/me", "/api/logout",
+                           "/oauth2/final", "/debug/**").permitAll()
+          .requestMatchers("/oauth2/**", "/login/**", "/logout").permitAll()
+          // Allow API endpoints without authentication for testing (remove in production)
+          .requestMatchers("/api/**").permitAll()
           .anyRequest().authenticated()
       )
       .headers(h -> h.frameOptions(f -> f.sameOrigin()))
