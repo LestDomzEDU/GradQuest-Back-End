@@ -22,4 +22,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * Check if user exists by email
      */
     boolean existsByEmail(String email);
+    
+    /**
+     * Find user by OAuth provider and provider ID
+     */
+    Optional<User> findByOauthProviderAndOauthProviderId(String oauthProvider, String oauthProviderId);
 }

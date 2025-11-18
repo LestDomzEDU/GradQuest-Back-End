@@ -4,7 +4,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
 import com.project03.model.StudentPreference;
+import com.project03.model.User;
 import com.project03.repository.StudentPreferenceRepository;
+import com.project03.repository.UserRepository;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,15 +20,22 @@ import java.util.Map;
 public class StudentPreferenceController {
 
     private final StudentPreferenceRepository repo;
+    private final UserRepository userRepo;
 
-    public StudentPreferenceController(StudentPreferenceRepository repo) {
+    public StudentPreferenceController(StudentPreferenceRepository repo, UserRepository userRepo) {
         this.repo = repo;
+        this.userRepo = userRepo;
     }
 
     @PostMapping
-    public ResponseEntity<?> savePreferences(@RequestParam String studentId, @RequestBody StudentPreference preferenceDetails) {
+    public ResponseEntity<?> savePreferences(@RequestParam Long userId, @RequestBody StudentPreference preferenceDetails) {
         try {
-            StudentPreference preference = repo.findByStudentId(studentId)
+            User user = userRepo.findById(userId).orElse(null);
+            if (user == null) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            StudentPreference preference = repo.findByUser(user)
                     .map(existing -> {
                         // Update existing preferences
                         if (preferenceDetails.getBudget() != null) existing.setBudget(preferenceDetails.getBudget());
@@ -45,7 +54,7 @@ public class StudentPreferenceController {
                     })
                     .orElseGet(() -> {
                         // Create new preferences
-                        preferenceDetails.setStudentId(studentId);
+                        preferenceDetails.setUser(user);
                         return preferenceDetails;
                     });
             
@@ -65,12 +74,16 @@ public class StudentPreferenceController {
     /**
      * get current user's saved preferences
      * 
-     * GET /api/preferences
+     * GET /api/preferences?userId=123
      */
 
     @GetMapping
-    public ResponseEntity<StudentPreference> getPreferences(@RequestParam String studentId) {
-        return repo.findByStudentId(studentId)
+    public ResponseEntity<StudentPreference> getPreferences(@RequestParam Long userId) {
+        User user = userRepo.findById(userId).orElse(null);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return repo.findByUser(user)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -78,12 +91,16 @@ public class StudentPreferenceController {
     /**
      * update student preferences
      * 
-     * PUT /api/preferences?studentId=123
+     * PUT /api/preferences?userId=123
      */
 
     @PutMapping
-    public ResponseEntity<StudentPreference> updatePreferences(@RequestParam String studentId, @RequestBody StudentPreference preferenceDetails) {
-        return repo.findByStudentId(studentId)
+    public ResponseEntity<StudentPreference> updatePreferences(@RequestParam Long userId, @RequestBody StudentPreference preferenceDetails) {
+        User user = userRepo.findById(userId).orElse(null);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return repo.findByUser(user)
                 .map(preference -> {
                     if (preferenceDetails.getBudget() != null) preference.setBudget(preferenceDetails.getBudget());
                     if (preferenceDetails.getSchoolYear() != null) preference.setSchoolYear(preferenceDetails.getSchoolYear());
@@ -106,13 +123,17 @@ public class StudentPreferenceController {
     /**
      * delete student preferences (basic user flow)
      * 
-     * DELETE /api/preferences?studentId=123
+     * DELETE /api/preferences?userId=123
      */
     
     @DeleteMapping
-    public ResponseEntity<Void> deletePreferences(@RequestParam String studentId) {
-        if (repo.existsByStudentId(studentId)) {
-            repo.deleteByStudentId(studentId);
+    public ResponseEntity<Void> deletePreferences(@RequestParam Long userId) {
+        User user = userRepo.findById(userId).orElse(null);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (repo.existsByUser(user)) {
+            repo.deleteByUser(user);
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.notFound().build();

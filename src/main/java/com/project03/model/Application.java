@@ -16,9 +16,9 @@ public class Application {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // OAuth user ID or email
-    @Column(name = "student_id", nullable = false)
-    private String studentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "school_id", nullable = false)
@@ -51,8 +51,8 @@ public class Application {
         this.status = ApplicationStatus.PENDING;
     }
 
-    public Application(String studentId, School school, String programName) {
-        this.studentId = studentId;
+    public Application(User user, School school, String programName) {
+        this.user = user;
         this.school = school;
         this.programName = programName;
         this.status = ApplicationStatus.PENDING;
@@ -66,12 +66,12 @@ public class Application {
         this.id = id;
     }
 
-    public String getStudentId() {
-        return studentId;
+    public User getUser() {
+        return user;
     }
 
-    public void setStudentId(String studentId) {
-        this.studentId = studentId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public School getSchool() {

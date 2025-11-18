@@ -1,6 +1,7 @@
 package com.project03.repository;
 
 import com.project03.model.StudentPreference;
+import com.project03.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,19 +14,19 @@ import java.util.Optional;
 public interface StudentPreferenceRepository extends JpaRepository<StudentPreference, Long> {
     
     /**
-     * Find preferences by student ID
-     * Each student should have only one set of preferences
+     * Find preferences by user
+     * Each user should have only one set of preferences
      */
-    Optional<StudentPreference> findByStudentId(String studentId);
+    Optional<StudentPreference> findByUser(User user);
     
     /**
-     * Check if preferences exist for a student
+     * Check if preferences exist for a user
      */
-    boolean existsByStudentId(String studentId);
+    boolean existsByUser(User user);
     
     /**
-     * Delete preferences by student ID
+     * Delete preferences by user
      */
-    void deleteByStudentId(String studentId);
+    void deleteByUser(User user);
 }
 

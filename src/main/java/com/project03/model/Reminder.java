@@ -13,9 +13,9 @@ public class Reminder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // OAuth user ID or email
-    @Column(name = "student_id", nullable = false)
-    private String studentId; 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "application_id", nullable = false)
@@ -58,9 +58,9 @@ public class Reminder {
         this.isCompleted = false;
     }
 
-    public Reminder(String studentId, Application application, LocalDate reminderDate, 
+    public Reminder(User user, Application application, LocalDate reminderDate, 
                    String title, ReminderType reminderType) {
-        this.studentId = studentId;
+        this.user = user;
         this.application = application;
         this.reminderDate = reminderDate;
         this.title = title;
@@ -87,12 +87,12 @@ public class Reminder {
         this.id = id;
     }
 
-    public String getStudentId() {
-        return studentId;
+    public User getUser() {
+        return user;
     }
 
-    public void setStudentId(String studentId) {
-        this.studentId = studentId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public Application getApplication() {

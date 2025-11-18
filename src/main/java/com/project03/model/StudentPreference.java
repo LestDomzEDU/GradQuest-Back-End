@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 /**
  * Entity representing student search preferences/criteria from the form submission.
- * Each student can have one set of preferences (one-to-one with studentId).
+ * Each student can have one set of preferences (one-to-one with user).
  */
 @Entity
 @Table(name = "student_preferences")
@@ -14,8 +14,9 @@ public class StudentPreference {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String studentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
 
     @Column(nullable = false)
     private Double budget;
@@ -61,9 +62,9 @@ public class StudentPreference {
     public StudentPreference() {
     }
 
-    public StudentPreference(String studentId, Double budget, String schoolYear, 
+    public StudentPreference(User user, Double budget, String schoolYear, 
                            String expectedGrad, SchoolType schoolType, String state) {
-        this.studentId = studentId;
+        this.user = user;
         this.budget = budget;
         this.schoolYear = schoolYear;
         this.expectedGrad = expectedGrad;
@@ -80,12 +81,12 @@ public class StudentPreference {
         this.id = id;
     }
 
-    public String getStudentId() {
-        return studentId;
+    public User getUser() {
+        return user;
     }
 
-    public void setStudentId(String studentId) {
-        this.studentId = studentId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public Double getBudget() {

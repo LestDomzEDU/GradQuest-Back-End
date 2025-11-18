@@ -5,8 +5,10 @@ import org.springframework.web.bind.annotation.*;
 
 import com.project03.model.School;
 import com.project03.model.StudentPreference;
+import com.project03.model.User;
 import com.project03.repository.SchoolRepository;
 import com.project03.repository.StudentPreferenceRepository;
+import com.project03.repository.UserRepository;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,24 +28,32 @@ public class SchoolController {
 
     private final SchoolRepository repo;
     private final StudentPreferenceRepository preferenceRepo;
+    private final UserRepository userRepo;
 
-    public SchoolController(SchoolRepository repo, StudentPreferenceRepository preferenceRepo) {
+    public SchoolController(SchoolRepository repo, StudentPreferenceRepository preferenceRepo, UserRepository userRepo) {
         this.repo = repo;
         this.preferenceRepo = preferenceRepo;
+        this.userRepo = userRepo;
     }
 
     /**
      * getting top 5 schools matching student's saved preferences
      * 
-     * GET /api/schools/top5?studentId={id}
+     * GET /api/schools/top5?userId={id}
      * 
      * this uses the student's saved preferences to match against available schools
      * 
      */
     @GetMapping("/top5")
-    public ResponseEntity<List<School>> getTop5Schools(@RequestParam String studentId) {
+    public ResponseEntity<List<School>> getTop5Schools(@RequestParam Long userId) {
+        // Retrieve user
+        User user = userRepo.findById(userId).orElse(null);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        
         // Retrieve student preferences
-        StudentPreference preferences = preferenceRepo.findByStudentId(studentId)
+        StudentPreference preferences = preferenceRepo.findByUser(user)
                 .orElse(null);
         
         if (preferences == null) {

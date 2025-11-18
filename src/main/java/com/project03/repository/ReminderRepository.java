@@ -1,6 +1,7 @@
 package com.project03.repository;
 
 import com.project03.model.Reminder;
+import com.project03.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,9 +18,9 @@ import java.util.Optional;
 public interface ReminderRepository extends JpaRepository<Reminder, Long> {
     
     /**
-     * Find all reminders for a specific student
+     * Find all reminders for a specific user
      */
-    List<Reminder> findByStudentId(String studentId);
+    List<Reminder> findByUser(User user);
     
     /**
      * Find reminders by application ID
@@ -27,53 +28,53 @@ public interface ReminderRepository extends JpaRepository<Reminder, Long> {
     List<Reminder> findByApplicationId(Long applicationId);
     
     /**
-     * Find reminders for a student and application
+     * Find reminders for a user and application
      */
-    List<Reminder> findByStudentIdAndApplicationId(String studentId, Long applicationId);
+    List<Reminder> findByUserAndApplicationId(User user, Long applicationId);
     
     /**
-     * Find a specific reminder by ID and student ID (for security)
+     * Find a specific reminder by ID and user (for security)
      */
-    Optional<Reminder> findByIdAndStudentId(Long id, String studentId);
+    Optional<Reminder> findByIdAndUser(Long id, User user);
     
     /**
      * Find upcoming reminders within a date range
      */
-    @Query("SELECT r FROM Reminder r WHERE r.studentId = :studentId AND " +
+    @Query("SELECT r FROM Reminder r WHERE r.user.id = :userId AND " +
            "r.isCompleted = false AND " +
            "r.reminderDate >= CURRENT_DATE AND " +
            "r.reminderDate <= :endDate " +
            "ORDER BY r.reminderDate ASC, r.reminderTime ASC")
-    List<Reminder> findUpcomingReminders(@Param("studentId") String studentId, 
+    List<Reminder> findUpcomingReminders(@Param("userId") Long userId, 
                                         @Param("endDate") LocalDate endDate);
     
     /**
      * Find reminders by completion status
      */
-    List<Reminder> findByStudentIdAndIsCompleted(String studentId, Boolean isCompleted);
+    List<Reminder> findByUserAndIsCompleted(User user, Boolean isCompleted);
     
     /**
      * Find reminders by type
      */
-    List<Reminder> findByStudentIdAndReminderType(String studentId, Reminder.ReminderType reminderType);
+    List<Reminder> findByUserAndReminderType(User user, Reminder.ReminderType reminderType);
     
     /**
      * Find overdue reminders (past date and not completed)
      */
-    @Query("SELECT r FROM Reminder r WHERE r.studentId = :studentId AND " +
+    @Query("SELECT r FROM Reminder r WHERE r.user.id = :userId AND " +
            "r.isCompleted = false AND " +
            "r.reminderDate < CURRENT_DATE " +
            "ORDER BY r.reminderDate ASC")
-    List<Reminder> findOverdueReminders(@Param("studentId") String studentId);
+    List<Reminder> findOverdueReminders(@Param("userId") Long userId);
     
     /**
-     * Count reminders by student ID
+     * Count reminders by user
      */
-    long countByStudentId(String studentId);
+    long countByUser(User user);
     
     /**
-     * Count incomplete reminders for a student
+     * Count incomplete reminders for a user
      */
-    long countByStudentIdAndIsCompleted(String studentId, Boolean isCompleted);
+    long countByUserAndIsCompleted(User user, Boolean isCompleted);
 }
 
