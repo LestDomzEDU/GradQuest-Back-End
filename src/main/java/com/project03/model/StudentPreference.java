@@ -18,6 +18,9 @@ public class StudentPreference {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+    @Column(name = "student_id", nullable = false)
+    private Long studentId;
+
     @Column(nullable = false)
     private Double budget;
 
@@ -65,6 +68,9 @@ public class StudentPreference {
     public StudentPreference(User user, Double budget, String schoolYear, 
                            String expectedGrad, SchoolType schoolType, String state) {
         this.user = user;
+        if (user != null) {
+            this.studentId = user.getId();
+        }
         this.budget = budget;
         this.schoolYear = schoolYear;
         this.expectedGrad = expectedGrad;
@@ -87,6 +93,18 @@ public class StudentPreference {
 
     public void setUser(User user) {
         this.user = user;
+        // Automatically set studentId to match user's ID
+        if (user != null) {
+            this.studentId = user.getId();
+        }
+    }
+
+    public Long getStudentId() {
+        return studentId;
+    }
+
+    public void setStudentId(Long studentId) {
+        this.studentId = studentId;
     }
 
     public Double getBudget() {
