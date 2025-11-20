@@ -48,8 +48,17 @@ public class OAuthSecurityConfig {
   @Bean
   CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration config = new CorsConfiguration();
-    config.setAllowedOrigins(List.of(
-        "https://grad-quest-app-2cac63f2b9b2.herokuapp.com"
+    // Use origin patterns to support wildcards and mobile app origins
+    config.setAllowedOriginPatterns(List.of(
+        "https://grad-quest-app-2cac63f2b9b2.herokuapp.com",
+        // for local testing
+        "exp://10.11.140.150:8081",
+        "http://10.11.140.150:8081",
+        // for android emulator
+        "http://10.0.2.2:8081",
+        "exp://10.0.2.2:8081",
+        "http://localhost:8081",
+        "http://127.0.0.1:8081"
     ));
     config.setAllowCredentials(true);
     config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
