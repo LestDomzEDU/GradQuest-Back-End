@@ -33,6 +33,16 @@ public interface ReminderRepository extends JpaRepository<Reminder, Long> {
     List<Reminder> findByUserAndApplicationId(User user, Long applicationId);
     
     /**
+     * Find reminders by school ID
+     */
+    List<Reminder> findBySchoolId(Long schoolId);
+    
+    /**
+     * Find reminders for a user and school
+     */
+    List<Reminder> findByUserAndSchoolId(User user, Long schoolId);
+    
+    /**
      * Find a specific reminder by ID and user (for security)
      */
     Optional<Reminder> findByIdAndUser(Long id, User user);
