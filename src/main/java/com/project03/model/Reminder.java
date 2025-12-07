@@ -29,7 +29,7 @@ public class Reminder {
     @JsonIgnore
     private School school;
 
-    // date for the reminder
+    // reminder date
     @Column(name = "reminder_date", nullable = false)
     private LocalDate reminderDate; 
 
@@ -37,20 +37,20 @@ public class Reminder {
     @Column(name = "reminder_time")
     private LocalTime reminderTime; 
 
-    // Reminder title
+    // reminder title
     @Column(nullable = false)
     private String title; 
 
-    // Reminder description/details
+    // reminder description/details
     @Column(columnDefinition = "TEXT")
     private String description;
     
-    // Reminder type
+    // reminder type
     @Column(name = "reminder_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private ReminderType reminderType;
 
-    // Whether reminder has been completed/dismissed
+    // whether reminder has been completed/dismissed
     @Column(name = "is_completed", nullable = false)
     private Boolean isCompleted; 
 
