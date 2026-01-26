@@ -22,7 +22,6 @@
 # BUT allow Gradle and Maven wrapper jars
 !gradle/wrapper/gradle-wrapper.jar
 !.mvn/wrapper/maven-wrapper.jar
-!src/main/resources/application-dev.PROPERTIES
 
 # Virtual machine crash logs
 hs_err_pid*
@@ -87,6 +86,7 @@ $RECYCLE.BIN/
 # Application-specific
 application-*.properties
 application-*.yml
+!src/main/resources/application-dev.properties
 !application.properties
 !application.yml
 !application-prod.properties
