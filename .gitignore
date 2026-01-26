@@ -22,6 +22,7 @@
 # BUT allow Gradle and Maven wrapper jars
 !gradle/wrapper/gradle-wrapper.jar
 !.mvn/wrapper/maven-wrapper.jar
+!src/main/resources/application-dev.PROPERTIES
 
 # Virtual machine crash logs
 hs_err_pid*
