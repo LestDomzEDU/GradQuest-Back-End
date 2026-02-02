@@ -86,6 +86,7 @@ $RECYCLE.BIN/
 # Application-specific
 application-*.properties
 application-*.yml
+!src/main/resources/application-dev.properties
 !application.properties
 !application.yml
 !application-prod.properties

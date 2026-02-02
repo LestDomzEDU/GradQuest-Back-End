@@ -38,6 +38,38 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+/**
+ * BootRun Quality-of-Life (Team Friendly)
+ * - Always run with dev profile when using `bootRun`
+ * - Auto-load environment variables from a local `.env` file (NOT committed)
+ *
+ * Create a `.env` file in the backend root (same folder as gradlew) like:
+ *   GITHUB_CLIENT_SECRET=your_secret_here
+ *
+ * Add `.env` to .gitignore so secrets never go to GitHub.
+ */
+tasks.named("bootRun") {
+    // No need to pass: --args="--spring.profiles.active=dev"
+    systemProperty "spring.profiles.active", "dev"
+
+    doFirst {
+        def envFile = file(".env")
+        if (envFile.exists()) {
+            envFile.readLines()
+                    .findAll { line ->
+                        line != null &&
+                        line.trim() &&
+                        !line.trim().startsWith("#") &&
+                        line.contains("=")
+                    }
+                    .each { line ->
+                        def (k, v) = line.split("=", 2)
+                        environment k.trim(), v.trim()
+                    }
+        }
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
@@ -54,3 +86,4 @@ tasks.jacocoTestReport {
         html.required = true
     }
 }
+

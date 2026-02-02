@@ -9,69 +9,79 @@ import org.springframework.security.oauth2.client.registration.InMemoryClientReg
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Configuration
 public class OAuthClientRegistrationConfig {
 
-  // IMPORTANT:
-  // This should point at your deployed backend base URL in prod.
-  // It defaults to your Heroku app, but you can override locally with
-  // OAUTH_REDIRECT_BASE=http://localhost:8080 for local testing.
-  @Value("${OAUTH_REDIRECT_BASE:https://grad-quest-app-2cac63f2b9b2.herokuapp.com}")
+  @Value("${oauth.redirect-base:http://localhost:8081}")
   private String redirectBase;
 
-  // GitHub OAuth (unchanged)
   @Value("${GITHUB_CLIENT_ID:}")
   private String githubClientId;
 
   @Value("${GITHUB_CLIENT_SECRET:}")
   private String githubClientSecret;
 
-  // Discord OAuth (new)
   @Value("${DISCORD_CLIENT_ID:}")
   private String discordClientId;
 
   @Value("${DISCORD_CLIENT_SECRET:}")
   private String discordClientSecret;
 
+  private boolean hasText(String s) {
+    return s != null && !s.trim().isEmpty();
+  }
+
   @Bean
   public ClientRegistrationRepository clientRegistrationRepository() {
-    // ---- GitHub registration ----
-    ClientRegistration github = ClientRegistration
-        .withRegistrationId("github")
-        .clientId(githubClientId)
-        .clientSecret(githubClientSecret)
-        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-        // Spring’s default login callback: {baseUrl}/login/oauth2/code/{registrationId}
-        .redirectUri(redirectBase + "/login/oauth2/code/{registrationId}")
-        .scope("read:user", "user:email")
-        .authorizationUri("https://github.com/login/oauth/authorize")
-        .tokenUri("https://github.com/login/oauth/access_token")
-        .userInfoUri("https://api.github.com/user")
-        .userNameAttributeName("id")
-        .clientName("GitHub")
-        .build();
+    List<ClientRegistration> regs = new ArrayList<>();
 
-    // ---- Discord registration (replaces Google) ----
-    ClientRegistration discord = ClientRegistration
-        .withRegistrationId("discord")
-        .clientId(discordClientId)
-        .clientSecret(discordClientSecret)
-        // Discord expects client_id / client_secret in the POST body
-        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
-        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-        // MUST match the redirect you configure in the Discord Developer Portal
-        // Example: https://grad-quest-app-2cac63f2b9b2.herokuapp.com/login/oauth2/code/discord
-        .redirectUri(redirectBase + "/login/oauth2/code/{registrationId}")
-        .scope("identify", "email")
-        .authorizationUri("https://discord.com/api/oauth2/authorize")
-        .tokenUri("https://discord.com/api/oauth2/token")
-        .userInfoUri("https://discord.com/api/users/@me")
-        .userNameAttributeName("id")
-        .clientName("Discord")
-        .build();
+    // ---- GitHub (only register if configured) ----
+    if (hasText(githubClientId) && hasText(githubClientSecret)) {
+      ClientRegistration github = ClientRegistration
+          .withRegistrationId("github")
+          .clientId(githubClientId.trim())
+          .clientSecret(githubClientSecret.trim())
+          .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+          .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+          .redirectUri(redirectBase + "/login/oauth2/code/{registrationId}")
+          .scope("read:user", "user:email")
+          .authorizationUri("https://github.com/login/oauth/authorize")
+          .tokenUri("https://github.com/login/oauth/access_token")
+          .userInfoUri("https://api.github.com/user")
+          .userNameAttributeName("id")
+          .clientName("GitHub")
+          .build();
 
-    // We now support two providers: github and discord
-    return new InMemoryClientRegistrationRepository(github, discord);
+      regs.add(github);
+    } else {
+      System.out.println("[OAuth] GitHub OAuth not configured (missing GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET).");
+    }
+
+    // ---- Discord (only register if configured) ----
+    if (hasText(discordClientId) && hasText(discordClientSecret)) {
+      ClientRegistration discord = ClientRegistration
+          .withRegistrationId("discord")
+          .clientId(discordClientId.trim())
+          .clientSecret(discordClientSecret.trim())
+          .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+          .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+          .redirectUri(redirectBase + "/login/oauth2/code/{registrationId}")
+          .scope("identify", "email")
+          .authorizationUri("https://discord.com/api/oauth2/authorize")
+          .tokenUri("https://discord.com/api/oauth2/token")
+          .userInfoUri("https://discord.com/api/users/@me")
+          .userNameAttributeName("id")
+          .clientName("Discord")
+          .build();
+
+      regs.add(discord);
+    } else {
+      System.out.println("[OAuth] Discord OAuth not configured (missing DISCORD_CLIENT_ID / DISCORD_CLIENT_SECRET).");
+    }
+
+    return new InMemoryClientRegistrationRepository(regs);
   }
 }
