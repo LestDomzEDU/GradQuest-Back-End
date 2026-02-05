@@ -4,6 +4,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -16,6 +18,7 @@ import java.util.List;
 public class OAuthSecurityConfig {
 
   @Bean
+<<<<<<< Updated upstream
   SecurityFilterChain securityFilterChain(HttpSecurity http,
                                           ClientRegistrationRepository registrations) throws Exception {
     http
@@ -42,6 +45,41 @@ public class OAuthSecurityConfig {
           .clearAuthentication(true)
           .deleteCookies("JSESSIONID")
       );
+=======
+  SecurityFilterChain securityFilterChain(
+      HttpSecurity http,
+      ClientRegistrationRepository registrations,
+      OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient
+  ) throws Exception {
+
+    http
+        .cors(Customizer.withDefaults())
+        .csrf(csrf -> csrf.disable())
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(
+                "/", "/index.html", "/error",
+                "/api/me", "/api/logout",
+                "/oauth2/final", "/debug/**"
+            ).permitAll()
+            .requestMatchers("/oauth2/**", "/login/**", "/logout").permitAll()
+            .requestMatchers("/api/**").permitAll()
+            .anyRequest().authenticated()
+        )
+        .headers(h -> h.frameOptions(f -> f.sameOrigin()))
+        .oauth2Login(oauth -> oauth
+            .authorizationEndpoint(ae -> ae.baseUri("/oauth2/authorization"))
+            .tokenEndpoint(te -> te.accessTokenResponseClient(accessTokenResponseClient))
+            .defaultSuccessUrl("/oauth2/final", true)
+            .failureUrl("/?login=failed")
+        )
+        .logout(logout -> logout
+            .logoutUrl("/api/logout")
+            .logoutSuccessUrl("/")
+            .clearAuthentication(true)
+            .deleteCookies("JSESSIONID")
+        );
+
+>>>>>>> Stashed changes
     return http.build();
   }
 

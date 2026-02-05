@@ -86,6 +86,10 @@ $RECYCLE.BIN/
 # Application-specific
 application-*.properties
 application-*.yml
+<<<<<<< Updated upstream
+=======
+!src/main/resources/application-dev.properties
+>>>>>>> Stashed changes
 !application.properties
 !application.yml
 !application-prod.properties
