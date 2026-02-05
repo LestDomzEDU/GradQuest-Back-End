@@ -1,17 +1,10 @@
-# Compiled class files
+# =========================
+# Java / Build Artifacts
+# =========================
 *.class
-
-# Log files
 *.log
 
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files
-*.jar
+# Package files (DO NOT commit app jars)
 *.war
 *.nar
 *.ear
@@ -19,98 +12,76 @@
 *.tar.gz
 *.rar
 
-# BUT allow Gradle and Maven wrapper jars
+# =========================
+# Gradle (Heroku REQUIRED)
+# =========================
+.gradle/
+build/
+
+# KEEP Gradle wrapper
+!gradlew
+!gradlew.bat
 !gradle/wrapper/gradle-wrapper.jar
-!.mvn/wrapper/maven-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
 
-# Virtual machine crash logs
-hs_err_pid*
-replay_pid*
-
-# Spring Boot
-target/
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-# Maven Wrapper
+# =========================
+# Maven (if ever used)
+# =========================
 .mvn/
 mvnw
 mvnw.cmd
 
-# Gradle
-.gradle
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+# =========================
+# Spring Boot
+# =========================
+target/
 
-# STS (Spring Tool Suite)
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
-
-# IntelliJ IDEA
-.idea
-*.iws
+# =========================
+# IDEs
+# =========================
+.idea/
 *.iml
 *.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
-
-# NetBeans
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-# VS Code
+*.iws
+.classpath
+.project
+.settings/
 .vscode/
+bin/
+out/
 
-# Mac
+# =========================
+# OS files
+# =========================
 .DS_Store
-
-# Windows
 Thumbs.db
-ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 
-# Application-specific
+# =========================
+# App config
+# =========================
 application-*.properties
 application-*.yml
-<<<<<<< Updated upstream
-=======
-!src/main/resources/application-dev.properties
-!src/main/resources/application-dev-secrets.properties
->>>>>>> Stashed changes
+
+# KEEP main configs
 !application.properties
 !application.yml
 !application-prod.properties
+!src/main/resources/application-dev.properties
+!src/main/resources/application-dev-secrets.properties
 
-# Environment variables
+# =========================
+# Env files
+# =========================
 .env
-.env.local
-.env.*.local
+.env.*
 
-# Database
+# =========================
+# DB / temp
+# =========================
 *.db
 *.sqlite
-
-# Docker
-.dockerignore
-
-# Logs
-logs/
-*.log.*
-
-# Temporary files
 *.tmp
 *.temp
+logs/
