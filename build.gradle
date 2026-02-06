@@ -11,7 +11,7 @@ version = '0.0.1-SNAPSHOT'
 java {
     toolchain {
         // Keep Java 21 toolchain (works with Gradle toolchains or a local JDK 21)
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
