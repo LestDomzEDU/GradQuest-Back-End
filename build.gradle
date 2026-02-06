@@ -10,7 +10,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
     toolchain {
-        // Keep Java 21 toolchain (works with Gradle toolchains or a local JDK 21)
+        // Heroku commonly uses Java 17 unless configured otherwise
         languageVersion = JavaLanguageVersion.of(17)
     }
 }
@@ -27,8 +27,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
     // DB drivers
-    runtimeOnly 'com.h2database:h2'
-    runtimeOnly 'org.postgresql:postgresql'   // <-- ADD THIS
+    runtimeOnly 'com.h2database:h2' // local/dev fallback
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.3.3' // MariaDB for Heroku (JawsDB)
 
     // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
