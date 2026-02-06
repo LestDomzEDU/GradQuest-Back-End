@@ -20,26 +20,23 @@ import java.util.List;
 @Configuration
 public class OAuthSecurityConfig {
 
-  /**
-   * Frontend base URL (used for CORS).
-   * In prod, set APP_BASE_URL in Heroku and application-prod.properties maps it to frontend.base.
-   */
   @Value("${frontend.base:http://localhost:8081}")
   private String frontendBase;
 
-  /**
-   * Optional extra CORS origins (comma-separated). Useful when testing from Expo/device, etc.
-   * Example:
-   *   CORS_ALLOWED_ORIGINS=exp://10.0.2.2:8081,http://10.0.2.2:8081
-   */
   @Value("${cors.allowed-origins:}")
   private String extraCorsOrigins;
+
+  @Bean
+  public HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository() {
+    return new HttpCookieOAuth2AuthorizationRequestRepository();
+  }
 
   @Bean
   SecurityFilterChain securityFilterChain(
       HttpSecurity http,
       ClientRegistrationRepository registrations,
-      OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient
+      OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient,
+      HttpCookieOAuth2AuthorizationRequestRepository authRequestRepo
   ) throws Exception {
 
     http
@@ -52,15 +49,15 @@ public class OAuthSecurityConfig {
                 "/oauth2/final", "/debug/**"
             ).permitAll()
             .requestMatchers("/oauth2/**", "/login/**", "/logout").permitAll()
-            // NOTE: You currently allow /api/** without auth. If you later want to lock down APIs,
-            // change this to authenticated() and permit only the public endpoints.
             .requestMatchers("/api/**").permitAll()
             .anyRequest().authenticated()
         )
         .headers(h -> h.frameOptions(f -> f.sameOrigin()))
         .oauth2Login(oauth -> oauth
-            .authorizationEndpoint(ae -> ae.baseUri("/oauth2/authorization"))
-            // Required for GitHub in some cases so it returns JSON token responses cleanly
+            .authorizationEndpoint(ae -> ae
+                .baseUri("/oauth2/authorization")
+                .authorizationRequestRepository(authRequestRepo) // ✅ FIX: store state in cookie
+            )
             .tokenEndpoint(te -> te.accessTokenResponseClient(accessTokenResponseClient))
             .defaultSuccessUrl("/oauth2/final", true)
             .failureUrl("/?login=failed")
@@ -81,12 +78,10 @@ public class OAuthSecurityConfig {
 
     List<String> originPatterns = new ArrayList<>();
 
-    // Frontend base from properties/env (recommended)
     if (frontendBase != null && !frontendBase.isBlank()) {
       originPatterns.add(stripTrailingSlash(frontendBase.trim()));
     }
 
-    // Common local dev origins
     originPatterns.addAll(List.of(
         "http://localhost:8081",
         "http://127.0.0.1:8081",
@@ -96,7 +91,6 @@ public class OAuthSecurityConfig {
         "exp://10.0.2.2:8081"
     ));
 
-    // Extra origins (comma-separated)
     if (extraCorsOrigins != null && !extraCorsOrigins.isBlank()) {
       Arrays.stream(extraCorsOrigins.split(","))
           .map(String::trim)
