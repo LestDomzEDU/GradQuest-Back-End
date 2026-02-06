@@ -1,91 +1,69 @@
 package com.project03.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.BufferingClientHttpRequestFactory;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
-import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
-import org.springframework.security.oauth2.core.OAuth2Error;
-import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequestEntityConverter;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
-import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * GitHub token endpoint: request JSON response via Accept header.
+ *
+ * IMPORTANT: Do NOT intercept+consume+rewrap the response body. That can break parsing.
+ */
 @Configuration
 public class GithubOAuth2TokenClientConfig {
-
-  private static final Logger log = LoggerFactory.getLogger(GithubOAuth2TokenClientConfig.class);
 
   @Bean
   public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient() {
 
-    DefaultAuthorizationCodeTokenResponseClient delegate = new DefaultAuthorizationCodeTokenResponseClient();
+    DefaultAuthorizationCodeTokenResponseClient client = new DefaultAuthorizationCodeTokenResponseClient();
 
-    RestTemplate restTemplate = new RestTemplate(
-        new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory())
-    );
+    // RestTemplate with the converters Spring Security expects
+    RestTemplate restTemplate = new RestTemplate(List.of(
+        new FormHttpMessageConverter(),
+        new OAuth2AccessTokenResponseHttpMessageConverter(),
+        new MappingJackson2HttpMessageConverter()
+    ));
 
-    // Keep existing converters + ensure token response converter exists
-    var converters = new ArrayList<>(restTemplate.getMessageConverters());
-    converters.add(new OAuth2AccessTokenResponseHttpMessageConverter());
-    restTemplate.setMessageConverters(converters);
+    client.setRestOperations(restTemplate);
 
-    restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
+    // Add Accept: application/json to the token request
+    OAuth2AuthorizationCodeGrantRequestEntityConverter entityConverter =
+        new OAuth2AuthorizationCodeGrantRequestEntityConverter();
 
-    // Ask GitHub for JSON and safely log error responses
-    restTemplate.getInterceptors().add((req, body, exec) -> {
-      req.getHeaders().set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
-      var resp = exec.execute(req, body);
+    client.setRequestEntityConverter(req -> {
+      var entity = entityConverter.convert(req);
+      if (entity == null) return null;
 
-      try {
-        byte[] bytes = resp.getBody().readAllBytes();
-        String text = new String(bytes, StandardCharsets.UTF_8);
-        String lower = text.toLowerCase();
+      HttpHeaders headers = new HttpHeaders();
+      headers.putAll(entity.getHeaders());
+      headers.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
 
-        // Never log if access_token is present
-        if (!lower.contains("access_token") && (lower.contains("error") || lower.contains("bad_verification_code")
-            || lower.contains("incorrect_client_credentials") || lower.contains("redirect_uri_mismatch"))) {
-          String snippet = text.length() > 800 ? text.substring(0, 800) + "..." : text;
-          log.error("GitHub token endpoint error payload: {}", snippet);
-        }
-
-        // replay body for downstream parsing
-        return new org.springframework.http.client.ClientHttpResponse() {
-          @Override public org.springframework.http.HttpStatusCode getStatusCode() throws java.io.IOException { return resp.getStatusCode(); }
-          @Override public int getRawStatusCode() throws java.io.IOException { return resp.getRawStatusCode(); }
-          @Override public String getStatusText() throws java.io.IOException { return resp.getStatusText(); }
-          @Override public void close() { resp.close(); }
-          @Override public java.io.InputStream getBody() { return new java.io.ByteArrayInputStream(bytes); }
-          @Override public HttpHeaders getHeaders() { return resp.getHeaders(); }
-        };
-      } catch (Exception ignored) {
-        return resp;
-      }
+      MultiValueMap<String, String> body = entity.getBody();
+      return new org.springframework.http.RequestEntity<>(
+          body,
+          headers,
+          entity.getMethod(),
+          entity.getUrl()
+      );
     });
 
-    delegate.setRestOperations(restTemplate);
-
-    return (OAuth2AuthorizationCodeGrantRequest request) -> {
-      OAuth2AccessTokenResponse tokenResponse = delegate.getTokenResponse(request);
-
-      if (tokenResponse == null || tokenResponse.getAccessToken() == null) {
-        throw new OAuth2AuthorizationException(new OAuth2Error(
-            "invalid_token_response",
-            "GitHub did not return an access_token. Check callback URL + client secret in Heroku.",
-            null
-        ));
-      }
-      return tokenResponse;
+    return request -> {
+      OAuth2AccessTokenResponse token = client.getTokenResponse(request);
+      // If token exchange failed, Spring will throw before we get here.
+      return token;
     };
   }
 }

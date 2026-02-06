@@ -18,24 +18,14 @@ import java.util.List;
 /**
  * Registers OAuth providers (GitHub required; Google/Discord optional).
  *
- * This is done in code (instead of only application.properties) so we can accept credentials from:
- *  - Spring properties (e.g. application-dev-secrets.properties)
- *  - Heroku Config Vars (environment variables)
- *
- * It also hard-sets the redirect URI base so it matches your OAuth app settings on Heroku.
+ * Uses environment variables on Heroku:
+ *  - GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET
  */
 @Configuration
 public class OAuthClientRegistrationConfig {
 
   private static final Logger log = LoggerFactory.getLogger(OAuthClientRegistrationConfig.class);
 
-  /**
-   * Base URL of the BACKEND (not the frontend). Example:
-   *  - Local:  http://localhost:8082
-   *  - Heroku: https://your-app-name.herokuapp.com
-   *
-   * In prod, set APP_BASE_URL in Heroku Config Vars and application-prod.properties maps it here.
-   */
   @Value("${oauth.redirect-base:http://localhost:8082}")
   private String redirectBase;
 
@@ -88,19 +78,20 @@ public class OAuthClientRegistrationConfig {
 
     if (ghClientId.isBlank() || ghClientSecret.isBlank()) {
       throw new IllegalStateException(
-          "Missing GitHub OAuth credentials. Set github.client-id/github.client-secret (recommended for local) " +
-              "or set GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET as environment variables (recommended for Heroku)."
+          "Missing GitHub OAuth credentials. Set github.client-id/github.client-secret (local) " +
+              "or set GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET (Heroku)."
       );
     }
 
     String githubRedirect = base + "/login/oauth2/code/github";
 
+    // ✅ IMPORTANT: Use CLIENT_SECRET_POST for GitHub (most reliable)
     ClientRegistration github = ClientRegistration.withRegistrationId("github")
         .clientId(ghClientId)
         .clientSecret(ghClientSecret)
         .clientName("GitHub")
         .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
         .redirectUri(githubRedirect)
         .scope("read:user", "user:email")
         .authorizationUri("https://github.com/login/oauth/authorize")
@@ -138,7 +129,6 @@ public class OAuthClientRegistrationConfig {
           .withRegistrationId("discord")
           .clientId(dClientId)
           .clientSecret(dClientSecret)
-          // Discord expects client_id / client_secret in the POST body
           .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
           .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
           .redirectUri(discordRedirect)
@@ -154,7 +144,6 @@ public class OAuthClientRegistrationConfig {
       log.info("Discord OAuth credentials not set; Discord login will be unavailable.");
     }
 
-    // Helpful sanity logs (NO secrets)
     log.info("OAuth redirect base={}", base);
     log.info("OAuth registrations={}", regs.stream().map(ClientRegistration::getRegistrationId).toList());
 
