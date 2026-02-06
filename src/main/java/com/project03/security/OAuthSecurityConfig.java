@@ -43,11 +43,9 @@ public class OAuthSecurityConfig {
         .cors(Customizer.withDefaults())
         .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers(
-                "/", "/index.html", "/error",
+            .requestMatchers("/", "/index.html", "/error",
                 "/api/me", "/api/logout",
-                "/oauth2/final", "/debug/**"
-            ).permitAll()
+                "/oauth2/final", "/debug/**").permitAll()
             .requestMatchers("/oauth2/**", "/login/**", "/logout").permitAll()
             .requestMatchers("/api/**").permitAll()
             .anyRequest().authenticated()
@@ -56,7 +54,7 @@ public class OAuthSecurityConfig {
         .oauth2Login(oauth -> oauth
             .authorizationEndpoint(ae -> ae
                 .baseUri("/oauth2/authorization")
-                .authorizationRequestRepository(authRequestRepo) // ✅ FIX: store state in cookie
+                .authorizationRequestRepository(authRequestRepo)
             )
             .tokenEndpoint(te -> te.accessTokenResponseClient(accessTokenResponseClient))
             .defaultSuccessUrl("/oauth2/final", true)

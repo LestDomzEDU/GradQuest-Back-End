@@ -23,8 +23,6 @@ public final class CookieUtils {
     cookie.setPath("/");
     cookie.setHttpOnly(true);
     cookie.setMaxAge(maxAge);
-    // Secure/SameSite are handled by container settings in prod,
-    // but Secure flag here helps on HTTPS.
     cookie.setSecure(true);
     response.addCookie(cookie);
   }

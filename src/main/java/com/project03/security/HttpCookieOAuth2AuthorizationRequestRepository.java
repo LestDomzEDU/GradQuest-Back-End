@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.util.SerializationUtils;
-import org.springframework.web.util.WebUtils;
 
 import java.util.Base64;
 
@@ -18,7 +17,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
   @Override
   public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
     return CookieUtils.getCookie(request, OAUTH2_AUTH_REQUEST_COOKIE_NAME)
-        .map(Cookie -> deserialize(Cookie.getValue()))
+        .map(c -> deserialize(c.getValue()))
         .orElse(null);
   }
 
@@ -32,9 +31,12 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
       removeAuthorizationRequestCookies(request, response);
       return;
     }
-
-    String serialized = serialize(authorizationRequest);
-    CookieUtils.addCookie(response, OAUTH2_AUTH_REQUEST_COOKIE_NAME, serialized, COOKIE_EXPIRE_SECONDS);
+    CookieUtils.addCookie(
+        response,
+        OAUTH2_AUTH_REQUEST_COOKIE_NAME,
+        serialize(authorizationRequest),
+        COOKIE_EXPIRE_SECONDS
+    );
   }
 
   @Override
