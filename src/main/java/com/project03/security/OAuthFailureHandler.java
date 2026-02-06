@@ -7,10 +7,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 
+/**
+ * IMPORTANT:
+ * Do NOT include exception messages in redirect URLs.
+ * Tomcat will 400 if the URL contains illegal characters.
+ *
+ * We log the detailed error to Heroku logs, and redirect to a stable URL.
+ */
 public class OAuthFailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
   private static final Logger log = LoggerFactory.getLogger(OAuthFailureHandler.class);
@@ -22,25 +28,10 @@ public class OAuthFailureHandler extends SimpleUrlAuthenticationFailureHandler {
       AuthenticationException exception
   ) throws IOException, ServletException {
 
-    // Log it
+    // Full detail stays in logs (safe)
     log.error("OAuth login failed: {}", exception.getMessage(), exception);
 
-    // Send reason back to browser (safe: no tokens)
-    String url = UriComponentsBuilder
-        .fromPath("/")
-        .queryParam("login", "failed")
-        .queryParam("reason", sanitize(exception.getMessage()))
-        .build()
-        .toUriString();
-
-    getRedirectStrategy().sendRedirect(request, response, url);
-  }
-
-  private String sanitize(String msg) {
-    if (msg == null) return "unknown";
-    // Avoid huge querystrings
-    msg = msg.replaceAll("[\\r\\n\\t]", " ");
-    if (msg.length() > 180) msg = msg.substring(0, 180);
-    return msg;
+    // Redirect to a clean URL (never 400)
+    getRedirectStrategy().sendRedirect(request, response, "/?login=failed");
   }
 }
