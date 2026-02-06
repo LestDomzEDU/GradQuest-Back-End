@@ -58,7 +58,9 @@ public class OAuthSecurityConfig {
             )
             .tokenEndpoint(te -> te.accessTokenResponseClient(accessTokenResponseClient))
             .defaultSuccessUrl("/oauth2/final", true)
-            .failureUrl("/?login=failed")
+
+            // ✅ this is the key: show the real reason
+            .failureHandler(new OAuthFailureHandler())
         )
         .logout(logout -> logout
             .logoutUrl("/api/logout")
