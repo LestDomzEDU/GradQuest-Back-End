@@ -7,18 +7,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class OAuthFinalController {
 
   @GetMapping("/oauth2/final")
-  public String closeTab() {
+  public String done() {
     return """
       <html>
-        <head><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
-        <body style="font-family:sans-serif">
-          <script>
-            try { window.close(); } catch(e) {}
-            setTimeout(function(){ window.location.href='/api/me'; }, 10);
-          </script>
-          <noscript>
-            <p>Signed in. <a href="/api/me">Continue</a></p>
-          </noscript>
+        <head>
+          <meta name="viewport" content="width=device-width,initial-scale=1"/>
+          <title>Signed in</title>
+        </head>
+        <body style="font-family:sans-serif;padding:16px">
+          <h2>✅ Signed in with GitHub</h2>
+          <p>You can now return to the app.</p>
+          <p><a href="/api/me">View session (/api/me)</a></p>
+          <p><a href="/">Home</a></p>
         </body>
       </html>
       """;

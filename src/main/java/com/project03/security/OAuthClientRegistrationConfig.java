@@ -1,8 +1,11 @@
 package com.project03.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.oauth2.client.CommonOAuth2Provider;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
@@ -12,23 +15,58 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Registers OAuth providers (GitHub required; Google/Discord optional).
+ *
+ * Uses environment variables on Heroku:
+ *  - GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET
+ */
 @Configuration
 public class OAuthClientRegistrationConfig {
 
-  @Value("${oauth.redirect-base:http://localhost:8081}")
+  private static final Logger log = LoggerFactory.getLogger(OAuthClientRegistrationConfig.class);
+
+  @Value("${oauth.redirect-base:http://localhost:8082}")
   private String redirectBase;
 
-  @Value("${GITHUB_CLIENT_ID:}")
-  private String githubClientId;
+  // GitHub (required)
+  @Value("${github.client-id:}")
+  private String githubClientIdProp;
 
-  @Value("${GITHUB_CLIENT_SECRET:}")
-  private String githubClientSecret;
+  @Value("${github.client-secret:}")
+  private String githubClientSecretProp;
 
-  @Value("${DISCORD_CLIENT_ID:}")
-  private String discordClientId;
+  // Google (optional)
+  @Value("${google.client-id:}")
+  private String googleClientIdProp;
 
-  @Value("${DISCORD_CLIENT_SECRET:}")
-  private String discordClientSecret;
+  @Value("${google.client-secret:}")
+  private String googleClientSecretProp;
+
+  // Discord (optional)
+  @Value("${discord.client-id:}")
+  private String discordClientIdProp;
+
+  @Value("${discord.client-secret:}")
+  private String discordClientSecretProp;
+
+  private static String n(String v) { return v == null ? "" : v.trim(); }
+
+  private static String firstNonBlank(String a, String b) {
+    a = n(a);
+    if (!a.isBlank()) return a;
+    b = n(b);
+    if (!b.isBlank()) return b;
+    return "";
+  }
+
+  private static String normalizeBase(String base) {
+    base = n(base);
+    if (base.isBlank()) base = "http://localhost:8082";
+    if (!base.startsWith("http://") && !base.startsWith("https://")) base = "http://" + base;
+    while (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+    return base;
+  }
 
   private boolean hasText(String s) {
     return s != null && !s.trim().isEmpty();
@@ -36,39 +74,68 @@ public class OAuthClientRegistrationConfig {
 
   @Bean
   public ClientRegistrationRepository clientRegistrationRepository() {
-    List<ClientRegistration> regs = new ArrayList<>();
+    String base = normalizeBase(redirectBase);
 
-    // ---- GitHub (only register if configured) ----
-    if (hasText(githubClientId) && hasText(githubClientSecret)) {
-      ClientRegistration github = ClientRegistration
-          .withRegistrationId("github")
-          .clientId(githubClientId.trim())
-          .clientSecret(githubClientSecret.trim())
-          .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-          .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-          .redirectUri(redirectBase + "/login/oauth2/code/{registrationId}")
-          .scope("read:user", "user:email")
-          .authorizationUri("https://github.com/login/oauth/authorize")
-          .tokenUri("https://github.com/login/oauth/access_token")
-          .userInfoUri("https://api.github.com/user")
-          .userNameAttributeName("id")
-          .clientName("GitHub")
-          .build();
+    // ---- GitHub (required) ----
+    String ghClientId = firstNonBlank(githubClientIdProp, System.getenv("GITHUB_CLIENT_ID"));
+    String ghClientSecret = firstNonBlank(githubClientSecretProp, System.getenv("GITHUB_CLIENT_SECRET"));
 
-      regs.add(github);
-    } else {
-      System.out.println("[OAuth] GitHub OAuth not configured (missing GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET).");
+    if (ghClientId.isBlank() || ghClientSecret.isBlank()) {
+      throw new IllegalStateException(
+          "Missing GitHub OAuth credentials. Set github.client-id/github.client-secret (local) " +
+              "or set GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET (Heroku)."
+      );
     }
 
-    // ---- Discord (only register if configured) ----
-    if (hasText(discordClientId) && hasText(discordClientSecret)) {
+    String githubRedirect = base + "/login/oauth2/code/github";
+
+    // ✅ IMPORTANT: Use CLIENT_SECRET_POST for GitHub (most reliable)
+    ClientRegistration github = ClientRegistration.withRegistrationId("github")
+        .clientId(ghClientId)
+        .clientSecret(ghClientSecret)
+        .clientName("GitHub")
+        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+        .redirectUri(githubRedirect)
+        .scope("read:user", "user:email")
+        .authorizationUri("https://github.com/login/oauth/authorize")
+        .tokenUri("https://github.com/login/oauth/access_token")
+        .userInfoUri("https://api.github.com/user")
+        .userNameAttributeName("id")
+        .build();
+
+    List<ClientRegistration> regs = new ArrayList<>();
+    regs.add(github);
+
+    // ---- Google (optional) ----
+    String gClientId = firstNonBlank(googleClientIdProp, System.getenv("GOOGLE_CLIENT_ID"));
+    String gClientSecret = firstNonBlank(googleClientSecretProp, System.getenv("GOOGLE_CLIENT_SECRET"));
+
+    if (!gClientId.isBlank() && !gClientSecret.isBlank()) {
+      String googleRedirect = base + "/login/oauth2/code/google";
+      ClientRegistration google = CommonOAuth2Provider.GOOGLE.getBuilder("google")
+          .clientId(gClientId)
+          .clientSecret(gClientSecret)
+          .redirectUri(googleRedirect)
+          .build();
+      regs.add(google);
+    } else {
+      log.info("Google OAuth credentials not set; Google login will be unavailable.");
+    }
+
+    // ---- Discord (optional) ----
+    String dClientId = firstNonBlank(discordClientIdProp, System.getenv("DISCORD_CLIENT_ID"));
+    String dClientSecret = firstNonBlank(discordClientSecretProp, System.getenv("DISCORD_CLIENT_SECRET"));
+
+    if (!dClientId.isBlank() && !dClientSecret.isBlank()) {
+      String discordRedirect = base + "/login/oauth2/code/discord";
       ClientRegistration discord = ClientRegistration
           .withRegistrationId("discord")
-          .clientId(discordClientId.trim())
-          .clientSecret(discordClientSecret.trim())
+          .clientId(dClientId)
+          .clientSecret(dClientSecret)
           .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
           .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-          .redirectUri(redirectBase + "/login/oauth2/code/{registrationId}")
+          .redirectUri(discordRedirect)
           .scope("identify", "email")
           .authorizationUri("https://discord.com/api/oauth2/authorize")
           .tokenUri("https://discord.com/api/oauth2/token")
@@ -76,11 +143,13 @@ public class OAuthClientRegistrationConfig {
           .userNameAttributeName("id")
           .clientName("Discord")
           .build();
-
       regs.add(discord);
     } else {
-      System.out.println("[OAuth] Discord OAuth not configured (missing DISCORD_CLIENT_ID / DISCORD_CLIENT_SECRET).");
+      log.info("Discord OAuth credentials not set; Discord login will be unavailable.");
     }
+
+    log.info("OAuth redirect base={}", base);
+    log.info("OAuth registrations={}", regs.stream().map(ClientRegistration::getRegistrationId).toList());
 
     return new InMemoryClientRegistrationRepository(regs);
   }

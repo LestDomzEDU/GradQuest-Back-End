@@ -10,8 +10,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
     toolchain {
-        // Keep Java 21 toolchain (works with Gradle toolchains or a local JDK 21)
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
@@ -28,7 +27,7 @@ dependencies {
 
     // DB drivers
     runtimeOnly 'com.h2database:h2'
-    runtimeOnly 'org.postgresql:postgresql'   // <-- ADD THIS
+    runtimeOnly 'com.mysql:mysql-connector-j'
 
     // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -87,3 +86,6 @@ tasks.jacocoTestReport {
     }
 }
 
+tasks.register("stage") {
+    dependsOn("clean", "bootJar")
+}

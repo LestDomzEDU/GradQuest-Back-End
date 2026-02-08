@@ -3,40 +3,45 @@ package com.project03.model;
 import jakarta.persistence.*;
 
 /**
- * Simple User entity for basic user management.
+ * User entity for OAuth-based login.
+ * NOTE: GitHub may not always provide an email, so email must be nullable.
  */
 @Entity
-@Table(name = "users", uniqueConstraints = {
-    // unique constraint for oauth provider and oauth provider id to make sure no dupes
-    @UniqueConstraint(columnNames = {"oauth_provider", "oauth_provider_id"})
-})
+@Table(
+    name = "app_users",
+    uniqueConstraints = {
+        // Ensure we don't create duplicate users for the same provider identity
+        @UniqueConstraint(columnNames = {"oauth_provider", "oauth_provider_id"})
+    }
+)
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "email", unique = true)
+    // Email can be null for GitHub OAuth depending on account/privacy settings.
+    // In MySQL/MariaDB, UNIQUE allows multiple NULL values, so this is safe.
+    @Column(name = "email", unique = true, nullable = true)
     private String email;
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = true)
     private String name;
 
-    // OAuth provider (e.g., "github", "google")
+    // OAuth provider (e.g., "github")
     @Column(name = "oauth_provider", nullable = false)
     private String oauthProvider;
 
-    // OAuth provider's user ID (GitHub ID or Google sub)
+    // OAuth provider user ID (e.g., GitHub id)
     @Column(name = "oauth_provider_id", nullable = false)
     private String oauthProviderId;
 
     // Avatar URL from OAuth provider
-    @Column(name = "avatar_url")
+    @Column(name = "avatar_url", nullable = true)
     private String avatarUrl;
 
     // Constructors
-    public User() {
-    }
+    public User() {}
 
     public User(String email, String name) {
         this.email = email;
@@ -51,51 +56,21 @@ public class User {
     }
 
     // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public String getOauthProvider() { return oauthProvider; }
+    public void setOauthProvider(String oauthProvider) { this.oauthProvider = oauthProvider; }
 
-    public String getName() {
-        return name;
-    }
+    public String getOauthProviderId() { return oauthProviderId; }
+    public void setOauthProviderId(String oauthProviderId) { this.oauthProviderId = oauthProviderId; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getOauthProvider() {
-        return oauthProvider;
-    }
-
-    public void setOauthProvider(String oauthProvider) {
-        this.oauthProvider = oauthProvider;
-    }
-
-    public String getOauthProviderId() {
-        return oauthProviderId;
-    }
-
-    public void setOauthProviderId(String oauthProviderId) {
-        this.oauthProviderId = oauthProviderId;
-    }
-
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
 }
