@@ -68,6 +68,10 @@ public class OAuthClientRegistrationConfig {
     return base;
   }
 
+  private boolean hasText(String s) {
+    return s != null && !s.trim().isEmpty();
+  }
+
   @Bean
   public ClientRegistrationRepository clientRegistrationRepository() {
     String base = normalizeBase(redirectBase);
