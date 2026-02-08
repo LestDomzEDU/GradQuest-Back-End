@@ -6,12 +6,13 @@ import java.time.LocalDate;
 /**
  * representing a student's application to a school.
  * nd links a student to a school from their top 5 matches.
- * will go over this later again to make sure we have all needed fields that we talked about in class 
+ * will go over this later again to make sure we have all needed fields that we
+ * talked about in class
  */
 @Entity
 @Table(name = "applications")
 public class Application {
-
+    /* hello */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -43,7 +44,7 @@ public class Application {
     private LocalDate submissionDate;
 
     @Column(name = "decision_date")
-    private LocalDate decisionDate; 
+    private LocalDate decisionDate;
 
     // SIMPLE CONSTRUCTORS, GETTERS, AND SETTERS
 
