@@ -8,7 +8,7 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(
-    name = "app_users",
+    name = "users",
     uniqueConstraints = {
         // Ensure we don't create duplicate users for the same provider identity
         @UniqueConstraint(columnNames = {"oauth_provider", "oauth_provider_id"})
