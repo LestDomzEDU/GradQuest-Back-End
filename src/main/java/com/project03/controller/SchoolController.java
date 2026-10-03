@@ -8,9 +8,9 @@ import com.project03.model.StudentPreference;
 import com.project03.model.User;
 import com.project03.repository.SchoolRepository;
 import com.project03.repository.StudentPreferenceRepository;
-import com.project03.repository.UserRepository;
+import com.project03.service.CurrentUserService;
+import org.springframework.security.core.Authentication;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,29 +28,25 @@ public class SchoolController {
 
     private final SchoolRepository repo;
     private final StudentPreferenceRepository preferenceRepo;
-    private final UserRepository userRepo;
+    private final CurrentUserService currentUser;
 
-    public SchoolController(SchoolRepository repo, StudentPreferenceRepository preferenceRepo, UserRepository userRepo) {
+    public SchoolController(SchoolRepository repo, StudentPreferenceRepository preferenceRepo, CurrentUserService currentUser) {
         this.repo = repo;
         this.preferenceRepo = preferenceRepo;
-        this.userRepo = userRepo;
+        this.currentUser = currentUser;
     }
 
     /**
      * getting top 5 schools matching student's saved preferences
      * 
-     * GET /api/schools/top5?userId={id}
+     * GET /api/schools/top5
      * 
      * this uses the student's saved preferences to match against available schools
      * 
      */
     @GetMapping("/top5")
-    public ResponseEntity<List<School>> getTop5Schools(@RequestParam Long userId) {
-        // Retrieve user
-        User user = userRepo.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<List<School>> getTop5Schools(Authentication authentication) {
+        User user = currentUser.require(authentication);
         
         // Retrieve student preferences
         StudentPreference preferences = preferenceRepo.findByUser(user)
@@ -198,78 +194,4 @@ public class SchoolController {
     public List<School> getAllSchools() {
         return repo.findAll();
     }
-
-    /**
-     * 
-     * endpoint: ability to add a new school/program to the database
-     * 
-     * POST /api/schools
-     */
-
-     @PostMapping
-     public ResponseEntity<?> createSchool(@RequestBody School school) {
-         try {
-             School savedSchool = repo.save(school);
-             return ResponseEntity.ok(savedSchool);
-         } catch (Exception e) {
-             Map<String, String> errorResponse = new HashMap<>();
-             errorResponse.put("error", "Failed to create school");
-             errorResponse.put("message", e.getMessage());
-             if (e.getCause() != null) {
-                 errorResponse.put("cause", e.getCause().getMessage());
-             }
-             return ResponseEntity.badRequest().body(errorResponse);
-         }
-     }
-
-    /**
-     * another admin endpoiint that can change the information of a school
-     * 
-     * PUT /api/schools/{schoolId}
-     */
-
-    @PutMapping("/{schoolId}")
-    public ResponseEntity<School> updateSchool(@PathVariable Long schoolId, @RequestBody School schoolDetails) {
-        return repo.findById(schoolId)
-                .map(school -> {
-                    if (schoolDetails.getName() != null) school.setName(schoolDetails.getName());
-                    if (schoolDetails.getType() != null) school.setType(schoolDetails.getType());
-                    if (schoolDetails.getState() != null) school.setState(schoolDetails.getState());
-                    if (schoolDetails.getCity() != null) school.setCity(schoolDetails.getCity());
-                    if (schoolDetails.getProgramName() != null) school.setProgramName(schoolDetails.getProgramName());
-                    if (schoolDetails.getProgramType() != null) school.setProgramType(schoolDetails.getProgramType());
-                    if (schoolDetails.getAnnualTuition() != null) school.setAnnualTuition(schoolDetails.getAnnualTuition());
-                    if (schoolDetails.getTotalCost() != null) school.setTotalCost(schoolDetails.getTotalCost());
-                    if (schoolDetails.getApplicationDeadline() != null) school.setApplicationDeadline(schoolDetails.getApplicationDeadline());
-                    if (schoolDetails.getApplicationFee() != null) school.setApplicationFee(schoolDetails.getApplicationFee());
-                    if (schoolDetails.getDescription() != null) school.setDescription(schoolDetails.getDescription());
-                    if (schoolDetails.getWebsiteUrl() != null) school.setWebsiteUrl(schoolDetails.getWebsiteUrl());
-                    if (schoolDetails.getRanking() != null) school.setRanking(schoolDetails.getRanking());
-                    if (schoolDetails.getAccreditation() != null) school.setAccreditation(schoolDetails.getAccreditation());
-                    if (schoolDetails.getEnrollmentType() != null) school.setEnrollmentType(schoolDetails.getEnrollmentType());
-                    if (schoolDetails.getModality() != null) school.setModality(schoolDetails.getModality());
-                    if (schoolDetails.getRequirementType() != null) school.setRequirementType(schoolDetails.getRequirementType());
-                    School updatedSchool = repo.save(school);
-                    return ResponseEntity.ok(updatedSchool);
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    /**
-     * another admin endpoint that can delete a school
-     * 
-     * DELETE /api/schools/{schoolId}
-     */
-
-    @DeleteMapping("/{schoolId}")
-    public ResponseEntity<Void> deleteSchool(@PathVariable Long schoolId) {
-        
-        if (repo.existsById(schoolId)) {
-            repo.deleteById(schoolId);
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
 }
-

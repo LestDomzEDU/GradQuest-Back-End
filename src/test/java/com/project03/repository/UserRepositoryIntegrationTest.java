@@ -22,8 +22,10 @@ class UserRepositoryIntegrationTest {
     @DisplayName("Save and fetch a User by id")
     void saveAndFetchUser() {
         User u = new User();
-        u.setEmail("test@example.com"); // email is @Column(nullable = false, unique = true)
+        u.setEmail("test@example.com");
         u.setName("Test User");
+        u.setOauthProvider("dev");
+        u.setOauthProviderId("dev-test");
 
         User saved = userRepository.save(u);
         assertThat(saved.getId()).isNotNull();
