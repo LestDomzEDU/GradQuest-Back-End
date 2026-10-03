@@ -103,6 +103,12 @@ public class OAuthUserService {
                 avatarUrl = "https://cdn.discordapp.com/avatars/"
                         + oauthProviderId + "/" + avatarHash + ".png";
             }
+        } else if ("dev".equals(oauthProvider)) {
+            // Local test users created by DevLoginController (dev profile only)
+            Object idObj = attrs.get("id");
+            oauthProviderId = idObj != null ? String.valueOf(idObj) : null;
+            email = (String) attrs.get("email");
+            name = (String) attrs.get("name");
         } else {
             throw new IllegalArgumentException("Unsupported OAuth provider: " + registrationId);
         }

@@ -45,7 +45,7 @@ public class OAuthSecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/", "/index.html", "/error",
                 "/api/me", "/api/logout",
-                "/oauth2/final", "/debug/**").permitAll()
+                "/oauth2/final", "/debug/**", "/dev/login").permitAll()
             .requestMatchers("/oauth2/**", "/login/**", "/logout").permitAll()
             .requestMatchers("/api/**").permitAll()
             .anyRequest().authenticated()
