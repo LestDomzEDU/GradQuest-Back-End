@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.security.config.oauth2.client.CommonOAuth2Provider;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -25,6 +27,12 @@ import java.util.List;
 public class OAuthClientRegistrationConfig {
 
   private static final Logger log = LoggerFactory.getLogger(OAuthClientRegistrationConfig.class);
+
+  private final Environment environment;
+
+  public OAuthClientRegistrationConfig(Environment environment) {
+    this.environment = environment;
+  }
 
   @Value("${oauth.redirect-base:http://localhost:8082}")
   private String redirectBase;
@@ -79,6 +87,12 @@ public class OAuthClientRegistrationConfig {
     // ---- GitHub (required) ----
     String ghClientId = firstNonBlank(githubClientIdProp, System.getenv("GITHUB_CLIENT_ID"));
     String ghClientSecret = firstNonBlank(githubClientSecretProp, System.getenv("GITHUB_CLIENT_SECRET"));
+
+    if ((ghClientId.isBlank() || ghClientSecret.isBlank()) && environment.acceptsProfiles(Profiles.of("dev"))) {
+      log.warn("GitHub OAuth credentials not set; using a placeholder (GitHub login disabled). Use /dev/login instead.");
+      ghClientId = "dev-placeholder";
+      ghClientSecret = "dev-placeholder";
+    }
 
     if (ghClientId.isBlank() || ghClientSecret.isBlank()) {
       throw new IllegalStateException(
