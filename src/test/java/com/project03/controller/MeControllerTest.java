@@ -8,8 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.project03.service.OAuthUserService;
 
 @ActiveProfiles("test")
 @WebMvcTest(MeController.class)
@@ -17,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class MeControllerTest {
 
     @Autowired private MockMvc mockMvc;
+    @MockBean private OAuthUserService oauthUserService;
 
     @Test
     @DisplayName("GET /api/me should be secured or return something")

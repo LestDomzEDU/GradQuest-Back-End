@@ -20,6 +20,8 @@ import com.project03.repository.ReminderRepository;
 import com.project03.repository.SchoolRepository;
 import com.project03.repository.StudentPreferenceRepository;
 import com.project03.repository.UserRepository;
+import com.project03.service.CurrentUserService;
+import com.project03.service.OAuthUserService;
 
 /**
  * Verifies that selected controllers are registered with Spring MVC
@@ -29,13 +31,10 @@ import com.project03.repository.UserRepository;
 @WebMvcTest({
         HomeController.class,
         MeController.class,
-        OAuthDebugController.class,
         OAuthFinalController.class,
         ReminderController.class,
         SchoolController.class,
-        StudentPreferenceController.class,
-        TestingController.class,
-        UserController.class
+        StudentPreferenceController.class
 })
 @AutoConfigureMockMvc(addFilters = false)
 class ControllerMappingsTest {
@@ -49,6 +48,8 @@ class ControllerMappingsTest {
     @MockBean private ApplicationRepository applicationRepository;
     @MockBean private ReminderRepository reminderRepository;
     @MockBean private UserRepository userRepository;
+    @MockBean private CurrentUserService currentUserService;
+    @MockBean private OAuthUserService oauthUserService;
 
     @Test
     @DisplayName("Controllers are present and have at least one registered handler method")
@@ -65,7 +66,7 @@ class ControllerMappingsTest {
         assertThat(handlers.stream().anyMatch(h -> h.getBeanType().equals(SchoolController.class)))
             .as("SchoolController has mappings").isTrue();
 
-        assertThat(handlers.stream().anyMatch(h -> h.getBeanType().equals(UserController.class)))
-            .as("UserController has mappings").isTrue();
+        assertThat(handlers.stream().anyMatch(h -> h.getBeanType().equals(ReminderController.class)))
+            .as("ReminderController has mappings").isTrue();
     }
 }

@@ -50,7 +50,7 @@ public class MeController {
       Map<String, Object> attrs = oauth2User.getAttributes();
       Map<String, Object> out = new LinkedHashMap<>();
       out.put("authenticated", true);
-      out.put("error", "Failed to create/update user: " + e.getMessage());
+      out.put("error", "Failed to create/update user");
 
       // GitHub fields
       String ghLogin = (String) attrs.get("login");
@@ -156,8 +156,7 @@ public class MeController {
     out.put("name", name);
     out.put("email", email);
     out.put("avatar_url", avatar);
-    // Note: oauthProvider is stored in DB but not exposed - it's an implementation detail
-    out.put("attributes", attrs);
+    out.put("provider", registrationId);
 
     return out;
   }

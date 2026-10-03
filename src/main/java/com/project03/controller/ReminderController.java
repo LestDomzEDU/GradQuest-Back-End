@@ -5,8 +5,11 @@ import com.project03.model.School;
 import com.project03.model.User;
 import com.project03.repository.ReminderRepository;
 import com.project03.repository.SchoolRepository;
-import com.project03.repository.UserRepository;
+import com.project03.service.CurrentUserService;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -22,34 +25,32 @@ import java.util.Map;
 @RequestMapping("/api/reminders")
 public class ReminderController {
 
+    private static final Logger log = LoggerFactory.getLogger(ReminderController.class);
+
     private final ReminderRepository reminderRepo;
-    private final UserRepository userRepo;
+    private final CurrentUserService currentUser;
     private final SchoolRepository schoolRepo;
 
-    public ReminderController(ReminderRepository reminderRepo, 
-                             UserRepository userRepo,
+    public ReminderController(ReminderRepository reminderRepo,
+                             CurrentUserService currentUser,
                              SchoolRepository schoolRepo) {
         this.reminderRepo = reminderRepo;
-        this.userRepo = userRepo;
+        this.currentUser = currentUser;
         this.schoolRepo = schoolRepo;
     }
 
     /**
      * Create a reminder for a school's application deadline
      * 
-     * POST /api/reminders?userId={userId}&schoolId={schoolId}
+     * POST /api/reminders?schoolId={schoolId}
      * 
      * Creates a reminder 1 week before the school's application deadline
      */
     @PostMapping
-    public ResponseEntity<?> createReminder(@RequestParam Long userId, 
+    public ResponseEntity<?> createReminder(Authentication authentication,
                                             @RequestParam Long schoolId) {
+        User user = currentUser.require(authentication);
         try {
-            // Get user
-            User user = userRepo.findById(userId).orElse(null);
-            if (user == null) {
-                return ResponseEntity.notFound().build();
-            }
 
             // Get school
             School school = schoolRepo.findById(schoolId).orElse(null);
@@ -100,9 +101,9 @@ public class ReminderController {
             Reminder savedReminder = reminderRepo.save(reminder);
             return ResponseEntity.ok(savedReminder);
         } catch (Exception e) {
+            log.warn("Request failed", e);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Failed to create reminder");
-            error.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }
@@ -110,14 +111,11 @@ public class ReminderController {
     /**
      * getting all the reminders for the logged-in student
      * 
-     * GET /api/reminders?userId={userId}
+     * GET /api/reminders
      */
     @GetMapping
-    public ResponseEntity<List<Reminder>> getUserReminders(@RequestParam Long userId) {
-        User user = userRepo.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<List<Reminder>> getUserReminders(Authentication authentication) {
+        User user = currentUser.require(authentication);
         List<Reminder> reminders = reminderRepo.findByUser(user);
         return ResponseEntity.ok(reminders);
     }
@@ -183,16 +181,12 @@ public class ReminderController {
     /**
      * delete a reminder by reminder ID
      * 
-     * DELETE /api/reminders/{reminderId}?userId={userId}
+     * DELETE /api/reminders/{reminderId}
      */
     @DeleteMapping("/{reminderId}")
-    public ResponseEntity<?> deleteReminder(@PathVariable Long reminderId,
-                                           @RequestParam Long userId) {
+    public ResponseEntity<?> deleteReminder(@PathVariable Long reminderId, Authentication authentication) {
+        User user = currentUser.require(authentication);
         try {
-            User user = userRepo.findById(userId).orElse(null);
-            if (user == null) {
-                return ResponseEntity.notFound().build();
-            }
 
             Reminder reminder = reminderRepo.findByIdAndUser(reminderId, user)
                     .orElse(null);
@@ -203,9 +197,9 @@ public class ReminderController {
             reminderRepo.delete(reminder);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
+            log.warn("Request failed", e);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Failed to delete reminder");
-            error.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }
@@ -213,16 +207,12 @@ public class ReminderController {
     /**
      * Delete reminder by school ID (when user unsaves a school)
      * 
-     * DELETE /api/reminders/school/{schoolId}?userId={userId}
+     * DELETE /api/reminders/school/{schoolId}
      */
     @DeleteMapping("/school/{schoolId}")
-    public ResponseEntity<?> deleteReminderBySchool(@PathVariable Long schoolId,
-                                                    @RequestParam Long userId) {
+    public ResponseEntity<?> deleteReminderBySchool(@PathVariable Long schoolId, Authentication authentication) {
+        User user = currentUser.require(authentication);
         try {
-            User user = userRepo.findById(userId).orElse(null);
-            if (user == null) {
-                return ResponseEntity.notFound().build();
-            }
 
             List<Reminder> reminders = reminderRepo.findByUserAndSchoolId(user, schoolId);
             if (reminders.isEmpty()) {
@@ -233,9 +223,9 @@ public class ReminderController {
             reminderRepo.deleteAll(reminders);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
+            log.warn("Request failed", e);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Failed to delete reminder");
-            error.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }
@@ -243,17 +233,13 @@ public class ReminderController {
     /**
      * toggle a reminder's completed status
      * 
-     * PATCH /api/reminders/{reminderId}/complete?userId={userId}
+     * PATCH /api/reminders/{reminderId}/complete
      *
      */
     @PatchMapping("/{reminderId}/complete")
-    public ResponseEntity<?> toggleReminderComplete(@PathVariable Long reminderId,
-                                                    @RequestParam Long userId) {
+    public ResponseEntity<?> toggleReminderComplete(@PathVariable Long reminderId, Authentication authentication) {
+        User user = currentUser.require(authentication);
         try {
-            User user = userRepo.findById(userId).orElse(null);
-            if (user == null) {
-                return ResponseEntity.notFound().build();
-            }
 
             Reminder reminder = reminderRepo.findByIdAndUser(reminderId, user)
                     .orElse(null);
@@ -266,9 +252,9 @@ public class ReminderController {
             Reminder updatedReminder = reminderRepo.save(reminder);
             return ResponseEntity.ok(updatedReminder);
         } catch (Exception e) {
+            log.warn("Request failed", e);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Failed to toggle reminder completion status");
-            error.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }

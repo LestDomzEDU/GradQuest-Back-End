@@ -2,11 +2,15 @@ package com.project03.controller;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.project03.model.StudentPreference;
 import com.project03.model.User;
 import com.project03.repository.StudentPreferenceRepository;
-import com.project03.repository.UserRepository;
+import com.project03.service.CurrentUserService;
+import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,22 +23,22 @@ import java.util.Map;
 @RequestMapping("/api/preferences")
 public class StudentPreferenceController {
 
-    private final StudentPreferenceRepository repo;
-    private final UserRepository userRepo;
+    private static final Logger log = LoggerFactory.getLogger(StudentPreferenceController.class);
 
-    public StudentPreferenceController(StudentPreferenceRepository repo, UserRepository userRepo) {
+    private final StudentPreferenceRepository repo;
+    private final CurrentUserService currentUser;
+
+    public StudentPreferenceController(StudentPreferenceRepository repo, CurrentUserService currentUser) {
         this.repo = repo;
-        this.userRepo = userRepo;
+        this.currentUser = currentUser;
     }
 
     @PostMapping
-    public ResponseEntity<?> savePreferences(@RequestParam Long userId, @RequestBody StudentPreference preferenceDetails) {
+    public ResponseEntity<?> savePreferences(Authentication authentication, @RequestBody StudentPreference preferenceDetails) {
+        User user = currentUser.require(authentication);
         try {
-            User user = userRepo.findById(userId).orElse(null);
-            if (user == null) {
-                return ResponseEntity.notFound().build();
-            }
-            
+            preferenceDetails.setId(null);
+
             StudentPreference preference = repo.findByUser(user)
                     .map(existing -> {
                         // Update existing preferences
@@ -61,12 +65,9 @@ public class StudentPreferenceController {
             StudentPreference savedPreference = repo.save(preference);
             return ResponseEntity.ok(savedPreference);
         } catch (Exception e) {
+            log.warn("Request failed", e);
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Failed to save preferences");
-            errorResponse.put("message", e.getMessage());
-            if (e.getCause() != null) {
-                errorResponse.put("cause", e.getCause().getMessage());
-            }
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
@@ -74,15 +75,12 @@ public class StudentPreferenceController {
     /**
      * get current user's saved preferences
      * 
-     * GET /api/preferences?userId=123
+     * GET /api/preferences
      */
 
     @GetMapping
-    public ResponseEntity<StudentPreference> getPreferences(@RequestParam Long userId) {
-        User user = userRepo.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<StudentPreference> getPreferences(Authentication authentication) {
+        User user = currentUser.require(authentication);
         return repo.findByUser(user)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -91,15 +89,12 @@ public class StudentPreferenceController {
     /**
      * update student preferences
      * 
-     * PUT /api/preferences?userId=123
+     * PUT /api/preferences
      */
 
     @PutMapping
-    public ResponseEntity<StudentPreference> updatePreferences(@RequestParam Long userId, @RequestBody StudentPreference preferenceDetails) {
-        User user = userRepo.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<StudentPreference> updatePreferences(Authentication authentication, @RequestBody StudentPreference preferenceDetails) {
+        User user = currentUser.require(authentication);
         return repo.findByUser(user)
                 .map(preference -> {
                     if (preferenceDetails.getBudget() != null) preference.setBudget(preferenceDetails.getBudget());
@@ -123,15 +118,13 @@ public class StudentPreferenceController {
     /**
      * delete student preferences (basic user flow)
      * 
-     * DELETE /api/preferences?userId=123
+     * DELETE /api/preferences
      */
     
     @DeleteMapping
-    public ResponseEntity<Void> deletePreferences(@RequestParam Long userId) {
-        User user = userRepo.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
+    @Transactional
+    public ResponseEntity<Void> deletePreferences(Authentication authentication) {
+        User user = currentUser.require(authentication);
         if (repo.existsByUser(user)) {
             repo.deleteByUser(user);
             return ResponseEntity.ok().build();

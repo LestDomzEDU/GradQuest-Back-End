@@ -3,12 +3,16 @@ package com.project03.security;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -45,11 +49,15 @@ public class OAuthSecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/", "/index.html", "/error",
                 "/api/me", "/api/logout",
-                "/oauth2/final", "/debug/**", "/dev/login").permitAll()
+                "/oauth2/final", "/dev/login").permitAll()
             .requestMatchers("/oauth2/**", "/login/**", "/logout").permitAll()
-            .requestMatchers("/api/**").permitAll()
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
             .anyRequest().authenticated()
         )
+        .exceptionHandling(ex -> ex.defaultAuthenticationEntryPointFor(
+            new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+            new AntPathRequestMatcher("/api/**")
+        ))
         .headers(h -> h.frameOptions(f -> f.sameOrigin()))
         .oauth2Login(oauth -> oauth
             .authorizationEndpoint(ae -> ae
