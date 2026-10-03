@@ -1,6 +1,7 @@
 package com.project03.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -127,6 +128,30 @@ public class Reminder {
 
     public void setSchool(School school) {
         this.school = school;
+    }
+
+    // Read-only school fields so clients can tell which schools a user has saved.
+    // Not named get*: Spring Data would treat them as entity properties and
+    // break derived queries such as findByUserAndSchoolId.
+
+    @JsonProperty("schoolId")
+    public Long jsonSchoolId() {
+        return school != null ? school.getId() : null;
+    }
+
+    @JsonProperty("schoolName")
+    public String jsonSchoolName() {
+        return school != null ? school.getName() : null;
+    }
+
+    @JsonProperty("programName")
+    public String jsonProgramName() {
+        return school != null ? school.getProgramName() : null;
+    }
+
+    @JsonProperty("websiteUrl")
+    public String jsonWebsiteUrl() {
+        return school != null ? school.getWebsiteUrl() : null;
     }
 
     public LocalDate getReminderDate() {
